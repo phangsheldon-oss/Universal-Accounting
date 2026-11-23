@@ -278,4 +278,24 @@ document.addEventListener('focusout',e=>{if(monetaryField(e.target))formatMoneta
 document.addEventListener('input',e=>{if(e.target.closest('#billLines'))updateBillTotal();if(e.target.closest('#pricingForm'))previewPricing()});document.addEventListener('change',e=>{if(e.target.closest('#pricingForm'))previewPricing()});
 render();
 
+/* First-run business setup v0.5.17: shared by Android and Windows desktop builds. */
+function showFirstRunSetup(){
+  const hasSavedBusiness=!!localStorage.getItem(KEY);
+  if(hasSavedBusiness)return;
+  const cover=document.createElement('div');
+  cover.id='firstRunSetup';
+  cover.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(12,28,44,.88);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+  cover.innerHTML='<section style="background:white;color:#17324d;max-width:530px;width:100%;border-radius:14px;padding:24px;box-shadow:0 15px 50px #0006"><h2>Welcome to Universal Accounting</h2><p>Set up your business before entering transactions. This information stays on this device.</p><form id="firstRunForm"><label>Business name *<input name="business" required maxlength="120" style="width:100%;padding:10px;margin:6px 0 14px" placeholder="Your business name"></label><label>Base currency <select name="currency" style="width:100%;padding:10px;margin:6px 0 14px">'+Object.entries(supportedCurrencies).map(([code,name])=>'<option value="'+code+'" '+(code==='JMD'?'selected':'')+'>'+code+' — '+name+'</option>').join('')+'</select></label><label>Financial year begins (month) <select name="fiscalMonth" style="width:100%;padding:10px;margin:6px 0 14px">'+Array.from({length:12},(_,i)=>'<option value="'+(i+1)+'">'+new Date(2024,i,1).toLocaleString('en',{month:'long'})+'</option>').join('')+'</select></label><p style="font-size:13px">A standard chart of accounts is provided. Opening balances can be entered later using the accounting functions. Export regular JSON backups from Settings.</p><button type="submit" style="padding:12px 18px;background:#17324d;color:white;border:0;border-radius:8px;cursor:pointer">Create business</button></form></section>';
+  document.body.appendChild(cover);
+  const form=cover.querySelector('form');
+  form.addEventListener('submit',e=>{
+    e.preventDefault();e.stopPropagation();
+    const d=new FormData(form),name=String(d.get('business')||'').trim(),currency=String(d.get('currency')),month=Number(d.get('fiscalMonth'));
+    if(!name||!Object.hasOwn(supportedCurrencies,currency)||!Number.isInteger(month)||month<1||month>12)return;
+    db.business=name;db.currency=currency;db.fiscalYearStartMonth=month;db.setupCompleted=true;
+    save();cover.remove();render();message('Business created. Export a backup regularly.');
+  });
+}
+showFirstRunSetup();
+
 </script></body></html>
