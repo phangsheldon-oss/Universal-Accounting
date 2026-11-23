@@ -1,0 +1,10 @@
+const fs = require('fs');
+const path = require('path');
+const pngToIco = require('png-to-ico');
+const html = fs.readFileSync(path.join(__dirname, '..', 'Android', 'app', 'src', 'main', 'assets', 'index.html'), 'utf8');
+fs.writeFileSync(path.join(__dirname, 'index.html'), html);
+const match = html.match(/<link\s+rel="icon"[^>]*href="data:image\/png;base64,([^"]+)"/i);
+if (!match) throw new Error('Original Universal Accounting logo not found in application HTML');
+const png = Buffer.from(match[1], 'base64');
+fs.writeFileSync(path.join(__dirname, 'icon.png'), png);
+pngToIco(png).then(ico => { fs.writeFileSync(path.join(__dirname, 'icon.ico'), ico); console.log('Original logo and shared application prepared'); }).catch(error => { console.error(error); process.exitCode = 1; });
