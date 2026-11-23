@@ -1,0 +1,38 @@
+name: Build Windows Installer
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'Windows/**'
+      - 'Android/app/src/main/assets/index.html'
+      - '.github/workflows/build-windows.yml'
+jobs:
+  windows-installer:
+    runs-on: windows-2022
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install desktop dependencies
+        working-directory: Windows
+        run: npm install --no-audit --no-fund
+      - name: Prepare shared application and original icon
+        working-directory: Windows
+        run: node prepare-assets.js
+      - name: Build Windows installer
+        working-directory: Windows
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run dist:win
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Universal-Accounting-Windows-Installer
+          path: Windows/dist/*.exe
+          if-no-files-found: error
