@@ -1,0 +1,40 @@
+{
+  "name": "universal-accounting-desktop",
+  "version": "0.5.16",
+  "private": true,
+  "description": "Universal Accounting local-first Windows desktop application",
+  "main": "main.js",
+  "scripts": {
+    "dist:win": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "26.0.12",
+    "png-to-ico": "2.1.8"
+  },
+  "build": {
+    "appId": "com.universalaccounting.desktop",
+    "productName": "Universal Accounting",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "icon.ico"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Universal Accounting"
+    }
+  }
+}
