@@ -59,7 +59,7 @@ document.addEventListener('submit',e=>{
 
 const KEY='ua_e1_v040';
 const formatPref=()=>db?.numberFormat==='plain'?'plain':'grouped';
-const money=n=>Number(n).toLocaleString('en-JM',{useGrouping:formatPref()!=='plain',minimumFractionDigits:2,maximumFractionDigits:2});
+const money=n=>(Number(n)+0).toLocaleString('en-JM',{useGrouping:formatPref()!=='plain',minimumFractionDigits:2,maximumFractionDigits:2});
 // Monetary entry fields: format on blur, preserve free typing and cursor while focused.
 function parseDisplayNumber(value){const raw=String(value??'').trim();if(!/^(?:\d+|[1-9]\d{0,2}(?:,\d{3})+)(?:\.\d{0,2})?$/.test(raw))return NaN;return Number(raw.replace(/,/g,''))}
 function monetaryField(el){if(!el||el.tagName!=='INPUT'||el.type==='number'||el.type==='date')return false;if(el.classList.contains('line-cost'))return true;return ['amount','cost','price'].includes(el.name)}
