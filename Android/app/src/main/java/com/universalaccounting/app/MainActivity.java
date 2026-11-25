@@ -70,6 +70,15 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new BackupBridge(), "AndroidBackup");
         webView.addJavascriptInterface(new LicenceBridge(), "AndroidLicence");
         webView.loadUrl(APP_URL);
+        if (android.os.Build.VERSION.SDK_INT >= 35) {
+            webView.setOnApplyWindowInsetsListener((view, insets) -> {
+                android.graphics.Insets safeArea = insets.getInsets(
+                    android.view.WindowInsets.Type.systemBars()
+                        | android.view.WindowInsets.Type.displayCutout());
+                view.setPadding(safeArea.left, safeArea.top, safeArea.right, safeArea.bottom);
+                return insets;
+            });
+        }
         setContentView(webView);
     }
 
