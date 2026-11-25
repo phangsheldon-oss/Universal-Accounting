@@ -23,3 +23,7 @@ v0.5.19 development build. Test data was fictional.
 The initial local test launch could not start the system Chromium because the executor blocked a required socket. The same suite passed using Playwright’s installed headless Chromium. Android’s historical exit 127 occurred before compilation because sdkmanager was absent.
 
 **Release disposition: blocked.** This is a development report. Update this report with signed build checksums and evidence for all remaining release checks before distribution.
+
+## Samsung acceptance test — November 24, 2026 (Jamaica)
+
+Signed Android v0.5.19 build 5, [Actions run #27](https://github.com/phangsheldon-oss/Universal-Accounting/actions/runs/45538276533). Verified the archive and APK checksums and that the signing certificate and licence public key match build 4. On the Samsung, the in-place update preserved activation and the fictional business records. Reopening and viewing reports succeeded in Airplane mode with Wi-Fi off. System bars cleared the app and report amounts were readable. The paid JMD 10,000 test sale produced JMD 10,000 revenue, JMD 10,000 cash/bank, zero receivables, and JMD 10,000 net profit. As of November 25 the Balance Sheet showed JMD 10,000 bank assets, zero liabilities, and JMD 10,000 unclosed earnings. The November 24 cutoff excluded the later posting. Transaction form dates now default to the local calendar day on the release branch. The date fix passed 12 browser tests and remains pending signed-device verification.
