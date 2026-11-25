@@ -1,0 +1,22 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),c=require('node:crypto');
+globalThis.crypto=c.webcrypto;
+require('./verify-licence.js');
+test('signed offline licence verification',async()=>{
+ const {privateKey,publicKey}=c.generateKeyPairSync('ec',{namedCurve:'prime256v1'});
+ const pub=publicKey.export({format:'jwk'});
+ const p={product:'Universal Accounting',version:1,licenceId:'fictional',installationId:'test-device-a',platform:'android',entitlement:'perpetual'};
+ const sign=x=>{const b=Buffer.from(JSON.stringify(x));return b.toString('base64url')+'.'+c.sign('sha256',b,{key:privateKey,dsaEncoding:'ieee-p1363'}).toString('base64url')};
+ const t=sign(p),v=(token,key=pub,id=p.installationId,platform=p.platform)=>UALicensing.verifyLicence(token,key,id,platform);
+ assert.equal(await v(t),true);
+ assert.equal(await v(t,pub,'other-device'),false);
+ assert.equal(await v(t,pub,p.installationId,'windows'),false);
+ assert.equal(await v(''),false);
+ assert.equal(await v('invalid'),false);
+ assert.equal(await v(sign({...p,product:'Other'})),false);
+ assert.equal(await v(sign({...p,version:2})),false);
+ assert.equal(await v(sign({...p,entitlement:'trial'})),false);
+ assert.equal(await v(sign({...p,licenceId:''})),false);
+ assert.equal(await v(t,c.generateKeyPairSync('ec',{namedCurve:'prime256v1'}).publicKey.export({format:'jwk'})),false);
+ assert.equal(await v(t,pub,''),false);
+ assert.equal(await v(t),true);
+});
