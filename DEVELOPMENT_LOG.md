@@ -21,3 +21,4 @@
 - Ran nine fictional Chromium tests and one Node licence test. See TEST_REPORT.md for open release checks.
 - Added passphrase-encrypted backup export and restore, an owner-only paid-order dashboard, duplicate order prevention, and signing workflows for production credentials.
 - Initial CI passed accounting tests and produced development installers for both platforms. Subsequent local verification passed 11 Chromium tests and two licence tests.
+- Added single-product inventory invoices with FIFO costing. Existing non-stock invoices retain their original treatment. Twelve Chromium and three Node tests passed locally.

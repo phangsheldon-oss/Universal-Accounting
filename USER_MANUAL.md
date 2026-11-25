@@ -11,6 +11,8 @@ Use Accounting → Capital & Equity to record money contributed by the owner. Se
 ## Record sales and purchases
 
 1. Under Sales, create or select the customer. Use Invoices to enter the amount, date and description. Review the posting and confirm it.
+For inventory sales, select the product and quantity and enter the full invoice amount. The app uses oldest received stock first (FIFO) and posts cost of goods sold automatically. Post goods receipts before their related sales. Older sales entered as non-stock invoices stay as recorded.
+
 2. When money arrives, use Payments against the invoice. Partial payments reduce the balance outstanding.
 3. Under Purchases, create the vendor and add products under Inventory → Stock. Enter the vendor bill with its invoice reference, quantities and unit costs.
 4. Use Goods Receipt for the quantities physically received. Use Pay Vendors to apply actual payments to the bill and record the payment method and reference.
@@ -20,7 +22,7 @@ Use Accounting → Capital & Equity to record money contributed by the owner. Se
 
 Use Profit & Loss for a date range and Balance Sheet for a single as-of date. Reports → Reports includes the trial balance. Check receivables, payables and stock against supporting records. Use Print Center to preview reports and documents.
 
-The development build does not post inventory sales depletion, cost of goods sold, depreciation or taxes automatically. Reports reflect the transactions the application can post.
+The development build includes FIFO inventory and cost of goods sold. Depreciation and taxes require separate accounting records.
 
 ## Back up and restore
 

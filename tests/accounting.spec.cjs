@@ -165,3 +165,46 @@ test('encrypted backups require the correct passphrase before replacing records'
  await page.reload();
  expect(await page.evaluate(()=>db.business)).toBe('Fictional Release Test');
 });
+
+test('stock invoice consumes FIFO receipt layers and reconciles inventory and gross profit',async({page})=>{
+ await setup(page);
+ await page.evaluate(()=>{
+  addVendor('Fictional Supplier');
+  addCustomer('Fictional Buyer');
+  addItem('T-FIFO','Fictional Product');
+  const vendor=db.vendors[0].id;
+  const item=db.items[0].id;
+  const first=createBill(vendor,[{item,quantity:2,cost:'100.00'}],'2026-01-01','FIFO-1');
+  const second=createBill(vendor,[{item,quantity:3,cost:'120.00'}],'2026-01-02','FIFO-2');
+  receiveGoods(first,'L1',2,'2026-01-01');
+  receiveGoods(second,'L1',3,'2026-01-03');
+  return navigate('Invoices');
+ });
+ const form=page.locator('#invoiceForm');
+ await form.locator('[name=date]').fill('2026-01-04');
+ await form.locator('[name=description]').fill('Stock sale');
+ await form.locator('[name=amount]').fill('600.00');
+ await form.locator('[name=product]').selectOption({index:1});
+ await form.locator('[name=units]').fill('3');
+ await form.getByRole('button').click();
+ await page.getByRole('button',{name:'Confirm & post'}).click();
+ const result=await page.evaluate(()=>{
+  const invoice=db.invoices[0];
+  const before=JSON.stringify(db);
+  let rejected=false;
+  try{createInvoice(invoice.customer,10000,'2026-01-05','Too many',invoice.stock.item,'3')}
+  catch{rejected=true}
+  return {
+   cost:invoice.stock.cost,
+   inventory:stockInfo(invoice.stock.item),
+   ledger:balances(),
+   gross:profitAndLoss('2026-01-01','2026-01-31'),
+   rejected,unchanged:before===JSON.stringify(db)
+  };
+ });
+ expect(result.cost).toBe(32000);
+ expect(result.inventory).toMatchObject({quantity:2,value:24000});
+ expect(result.ledger).toMatchObject({'1100':60000,'1200':24000,'4000':-60000,'5000':32000});
+ expect(result.gross).toContain('Gross profit: JMD 280.00');
+ expect(result).toMatchObject({rejected:true,unchanged:true});
+});
