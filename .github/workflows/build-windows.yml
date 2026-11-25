@@ -29,7 +29,7 @@ jobs:
           node-version: '22'
       - name: Install desktop dependencies
         working-directory: Windows
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Prepare shared application and original icon
         working-directory: Windows
         run: node prepare-assets.js

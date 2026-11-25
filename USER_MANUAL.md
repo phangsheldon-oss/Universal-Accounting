@@ -1,6 +1,6 @@
 # Universal Accounting Edition 2 user manual
 
-Development build v0.5.18
+Development build v0.5.19
 
 ## Set up your business
 

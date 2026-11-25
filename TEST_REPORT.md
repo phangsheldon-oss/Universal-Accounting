@@ -1,6 +1,6 @@
 # Universal Accounting Edition 2 release verification
 
-v0.5.18 development build. Test data was fictional.
+v0.5.19 development build. Test data was fictional.
 
 | Release check | Result |
 | --- | --- |

@@ -22,3 +22,7 @@
 - Added passphrase-encrypted backup export and restore, an owner-only paid-order dashboard, duplicate order prevention, and signing workflows for production credentials.
 - Initial CI passed accounting tests and produced development installers for both platforms. Subsequent local verification passed 11 Chromium tests and two licence tests.
 - Added single-product inventory invoices with FIFO costing. Existing non-stock invoices retain their original treatment. Twelve Chromium and three Node tests passed locally.
+
+## v0.5.19 — supported Windows runtime
+
+- Updated Windows packaging to Electron 45.5.0 and pinned the dependency graph in the Windows lockfile. Updated the Android build version and Edition 2 title.

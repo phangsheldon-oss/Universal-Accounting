@@ -1,4 +1,4 @@
-# Universal Accounting Edition 2 — development build v0.5.18
+# Universal Accounting Edition 2 — development build v0.5.19
 
 **This archive contains source code, NOT an APK or EXE.** Android and Windows build recipes are provided in `.github/workflows`.
 
