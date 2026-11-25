@@ -1,0 +1,64 @@
+name: Build Windows Store Package
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  package:
+    runs-on: windows-2022
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: Windows
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      STORE_IDENTITY: ${{ vars.UA_STORE_IDENTITY_NAME }}
+      STORE_PUBLISHER: ${{ vars.UA_STORE_PUBLISHER }}
+      STORE_DISPLAY_NAME: ${{ vars.UA_STORE_PUBLISHER_DISPLAY_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: node prepare-assets.js
+      - name: Package and verify AppX manifest
+        shell: pwsh
+        run: |
+          $preview = -not ($env:STORE_IDENTITY -and $env:STORE_PUBLISHER -and $env:STORE_DISPLAY_NAME)
+          if ($preview) {
+            $env:STORE_IDENTITY = 'UniversalAccounting.Preview'
+            $env:STORE_PUBLISHER = 'CN=UniversalAccountingPreview'
+            $env:STORE_DISPLAY_NAME = 'Universal Accounting Preview'
+          }
+          npx --no-install electron-builder --win appx --x64 --publish never `
+            "--config.appx.identityName=$env:STORE_IDENTITY" `
+            "--config.appx.publisher=$env:STORE_PUBLISHER" `
+            "--config.appx.publisherDisplayName=$env:STORE_DISPLAY_NAME" `
+            '--config.appx.applicationId=UniversalAccounting' `
+            '--config.appx.minVersion=10.0.17763.0'
+          if ($LASTEXITCODE -ne 0) { throw 'AppX packaging failed' }
+          $packages = @(Get-ChildItem dist -Filter *.appx -File)
+          if ($packages.Count -ne 1) { throw 'Expected one AppX package' }
+          $package = $packages[0]
+          $archive = [IO.Compression.ZipFile]::OpenRead($package.FullName)
+          try {
+            $reader = [IO.StreamReader]::new($archive.GetEntry('AppxManifest.xml').Open())
+            try { [xml]$manifest = $reader.ReadToEnd() } finally { $reader.Dispose() }
+            if ($manifest.Package.Identity.Name -cne $env:STORE_IDENTITY -or
+                $manifest.Package.Identity.Publisher -cne $env:STORE_PUBLISHER) {
+              throw 'The AppX manifest identity does not match the build settings'
+            }
+          } finally { $archive.Dispose() }
+          $hash = (Get-FileHash $package.FullName -Algorithm SHA256).Hash
+          "$hash  $($package.Name)" | Set-Content dist/SHA256SUMS.txt
+          $artifact = if ($preview) { 'Windows-Store-Preview' } else { 'Windows-Store-Publisher-Package' }
+          "STORE_ARTIFACT=$artifact" >> $env:GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.STORE_ARTIFACT }}
+          path: |
+            Windows/dist/*.appx
+            Windows/dist/SHA256SUMS.txt
+          if-no-files-found: error
