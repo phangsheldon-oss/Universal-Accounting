@@ -1,6 +1,14 @@
 name: Build Windows Installer
 on:
   workflow_dispatch:
+    inputs:
+      commercial:
+        description: Embed the owner's public licence verification key
+        required: false
+        type: boolean
+        default: false
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
     paths:
@@ -25,6 +33,15 @@ jobs:
       - name: Prepare shared application and original icon
         working-directory: Windows
         run: node prepare-assets.js
+      - name: Prepare Windows activation gate
+        if: inputs.commercial
+        working-directory: Windows
+        env:
+          UA_PUBLIC_JWK: ${{ vars.UA_PUBLIC_JWK }}
+        run: |
+          $keyPath = Join-Path $env:RUNNER_TEMP 'ua-public.json'
+          Set-Content -Path $keyPath -Value $env:UA_PUBLIC_JWK -Encoding utf8NoBOM
+          node ../licensing/prepare-commercial.cjs windows $keyPath index.html
       - name: Build Windows installer
         working-directory: Windows
         env:

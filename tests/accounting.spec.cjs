@@ -30,14 +30,79 @@ test('balanced capital, sales, receipts, purchases and inventory',async({page})=
 test('reject overpayment without mutation',async({page})=>{
  expect(await page.evaluate(()=>{db=empty();addCustomer('Sample Customer');const i=createInvoice(db.customers[0].id,10000,'2026-01-15','Test');const before=JSON.stringify(db);try{recordPayment(i,10001,'2026-01-15')}catch{return JSON.stringify(db)===before}return false})).toBe(true);
 });
-for(const [name,operation] of [
- ['negative invoice', 'createInvoice(db.customers[0].id,-100,"2026-01-15","Invalid")'],
- ['impossible invoice date','createInvoice(db.customers[0].id,100,"2026-02-30","Invalid")'],
- ['negative payment','recordPayment(db.invoices[0].id,-100,"2026-01-15")'],
- ['invalid payment date','recordPayment(db.invoices[0].id,100,"not-a-date")']
+for(const [name,kind,cents,date] of [
+ ['negative invoice','invoice',-100,'2026-01-15'],
+ ['impossible invoice date','invoice',100,'2026-02-30'],
+ ['negative payment','payment',-100,'2026-01-15'],
+ ['invalid payment date','payment',100,'not-a-date']
 ]){
  test('reject '+name+' atomically',async({page})=>{
- const result=await page.evaluate(op=>{db=empty();addCustomer('Sample Customer');createInvoice(db.customers[0].id,10000,'2026-01-15','Test');const before=JSON.stringify(db);let rejected=false;try{eval(op)}catch{rejected=true}return {rejected,unchanged:JSON.stringify(db)===before}},operation);
- expect(result).toEqual({rejected:true,unchanged:true});
+  const result=await page.evaluate(({kind,cents,date})=>{
+   db=empty();
+   addCustomer('Sample Customer');
+   const customer=db.customers[0].id;
+   const invoice=createInvoice(customer,10000,'2026-01-15','Test');
+   const before=JSON.stringify(db);
+   let rejected=false;
+   try{
+    if(kind==='invoice')createInvoice(customer,cents,date,'Invalid');
+    else recordPayment(invoice,cents,date);
+   }catch{rejected=true}
+   return {rejected,unchanged:JSON.stringify(db)===before};
+  },{kind,cents,date});
+  expect(result).toEqual({rejected:true,unchanged:true});
  });
 }
+
+async function setup(page){
+ await page.locator('#firstRunForm [name=business]').fill('Fictional Release Test');
+ await page.locator('#firstRunForm button').click();
+}
+
+test('as-of reporting preserves the P&L period and printed equity includes earnings',async({page})=>{
+ await setup(page);
+ await page.evaluate(()=>{
+  addCustomer('Fictional Buyer');
+  const customer=db.customers[0].id;
+  capitalTransaction('opening',50000,'2026-01-01','1000','Test');
+  createInvoice(customer,12000,'2026-01-15','January service');
+  createInvoice(customer,4000,'2026-02-15','February service');
+  reportFrom='2026-01-01';
+  reportTo='2026-02-28';
+  return navigate('Balance Sheet');
+ });
+ await page.locator('#reportDates [name=from]').fill('2026-01-31');
+ await page.getByRole('button',{name:'Update report'}).click();
+ await expect(page.locator('#view')).toContainText('Accounting equation difference: JMD 0.00');
+ await expect(page.locator('#view')).toContainText('JMD 620.00');
+ const printed=await page.evaluate(()=>({
+  balance:makePrintDocument('balance',''),
+  profit:makePrintDocument('pnl',''),
+  period:[reportFrom,reportTo]
+ }));
+ expect(printed.balance).toContain('Unclosed earnings');
+ expect(printed.balance).toContain('JMD 620.00');
+ expect(printed.profit).toContain('JMD 160.00');
+ expect(printed.period).toEqual(['2026-01-01','2026-02-28']);
+});
+
+test('export and restore fictional records and reject an unbalanced backup',async({page})=>{
+ const fs=require('node:fs/promises');
+ await setup(page);
+ await page.evaluate(()=>{addCustomer('Fictional Buyer');createInvoice(db.customers[0].id,12000,'2026-01-15','Service');return navigate('Settings')});
+ const download=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export JSON backup'}).click();
+ const json=await fs.readFile(await (await download).path());
+ const expected=JSON.parse(json);
+ const bad=JSON.parse(json);
+ bad.journals[0].lines[0].dr++;
+ await page.locator('#import').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bad))});
+ await expect(page.locator('#notice')).toContainText('Unbalanced backup journal');
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem(KEY)))).toEqual(expected);
+ await page.evaluate(()=>{db=empty();save()});
+ page.once('dialog',dialog=>dialog.accept());
+ await page.locator('#import').setInputFiles({name:'backup.json',mimeType:'application/json',buffer:json});
+ await expect(page.locator('#notice')).toContainText('Backup restored');
+ await page.reload();
+ expect(await page.evaluate(()=>db)).toEqual(expected);
+});

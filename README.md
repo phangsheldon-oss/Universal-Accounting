@@ -1,4 +1,4 @@
-# Universal Accounting — cross-platform build source v0.5.16
+# Universal Accounting Edition 2 — development build v0.5.18
 
 **This archive contains source code, NOT an APK or EXE.** Android and Windows build recipes are provided in `.github/workflows`.
 
@@ -13,3 +13,5 @@ Both installations store data locally and independently. No automatic synchroniz
 The Android backup save handler now clears its pending backup even when the file chooser is canceled, and reports success/failure. These changes are statically reviewed, **not tested on an Android device**.
 
 Neither platform installer was built in this environment because dependencies and build tools are unavailable. The software is not production certified.
+
+See [User manual](USER_MANUAL.md) and [Release verification](TEST_REPORT.md).

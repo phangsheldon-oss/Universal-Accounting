@@ -1,6 +1,6 @@
 {
   "name": "universal-accounting-desktop",
-  "version": "0.5.16",
+  "version": "0.5.18",
   "private": true,
   "description": "Universal Accounting local-first Windows desktop application",
   "main": "main.js",
@@ -20,6 +20,7 @@
     },
     "files": [
       "main.js",
+      "preload.js",
       "index.html",
       "icon.ico"
     ],
