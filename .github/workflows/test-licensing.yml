@@ -1,0 +1,16 @@
+name: Test Licence Security
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'licensing/**'
+      - '.github/workflows/test-licensing.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test licensing/verify.test.cjs
