@@ -182,12 +182,22 @@ test('stock invoice consumes FIFO receipt layers and reconciles inventory and gr
  });
  const form=page.locator('#invoiceForm');
  await form.locator('[name=date]').fill('2026-01-04');
- await form.locator('[name=description]').fill('Stock sale');
+ await form.locator('[name=customer]').selectOption({index:1});
  await form.locator('[name=amount]').fill('600.00');
- await form.locator('[name=product]').selectOption({index:1});
+ await form.locator('#salesItemLookup').fill('T-FIFO');
+ await expect(form.locator('[name=description]')).toHaveValue('Fictional Product');
  await form.locator('[name=units]').fill('3');
  await form.getByRole('button').click();
- await page.getByRole('button',{name:'Confirm & post'}).click();
+ await page.getByRole('button',{name:'Save only',exact:true}).click();
+ expect(await page.evaluate(()=>({drafts:db.drafts.length,invoices:db.invoices.length}))).toEqual({drafts:1,invoices:0});
+ await page.reload();
+ await page.evaluate(()=>navigate('Invoices'));
+ await page.getByRole('button',{name:'Open draft'}).click();
+ await expect(form.locator('[name=amount]')).toHaveValue('600.00');
+ await form.getByRole('button').click();
+ await page.getByRole('button',{name:'Save and post',exact:true}).click();
+ await expect(form.locator('[name=customer]')).toHaveValue('');
+ await expect(page.getByRole('button',{name:'Open draft'})).toHaveCount(0);
  await expect(page.locator('#postedInvoices')).toBeFocused();
  await expect(page.locator('#postedInvoices tbody tr').first()).toContainText('Fictional Buyer');
  await expect(page.locator('#invoiceForm [name=description]')).toHaveValue('');
@@ -210,4 +220,32 @@ test('stock invoice consumes FIFO receipt layers and reconciles inventory and gr
  expect(result.ledger).toMatchObject({'1100':60000,'1200':24000,'4000':-60000,'5000':32000});
  expect(result.gross).toContain('Gross profit: JMD 280.00');
  expect(result).toMatchObject({rejected:true,unchanged:true});
+});
+
+test('draft customer cash payment leaves the ledger unchanged until posted',async({page})=>{
+ await setup(page);
+ await page.evaluate(()=>{
+  addCustomer('Fictional Buyer');
+  createInvoice(db.customers[0].id,10000,'2026-01-15','Test invoice');
+  return navigate('Payments');
+ });
+ const form=page.locator('#paymentForm');
+ await form.getByRole('button').click();
+ await page.getByRole('button',{name:'Save only',exact:true}).click();
+ await page.getByRole('button',{name:'Open draft'}).click();
+ await form.locator('[name=invoice]').selectOption({index:1});
+ await form.locator('[name=date]').fill('2026-01-15');
+ await form.locator('[name=amount]').fill('75.00');
+ await form.locator('[name=method]').selectOption('cash');
+ await form.locator('[name=reference]').fill('QA-CASH-1');
+ await form.getByRole('button').click();
+ await page.getByRole('button',{name:'Save only',exact:true}).click();
+ expect(await page.evaluate(()=>({drafts:db.drafts.length,journals:db.journals.length}))).toEqual({drafts:1,journals:1});
+ await page.getByRole('button',{name:'Open draft'}).click();
+ await expect(form.locator('[name=method]')).toHaveValue('cash');
+ await form.getByRole('button').click();
+ await page.getByRole('button',{name:'Save and post',exact:true}).click();
+ await expect(form.locator('[name=invoice]')).toHaveValue('');
+ await expect(page.getByRole('row').filter({hasText:'QA-CASH-1'})).toContainText('Cash');
+ expect(await page.evaluate(()=>balances())).toMatchObject({'1010':7500,'1100':2500});
 });
