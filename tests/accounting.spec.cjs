@@ -188,6 +188,9 @@ test('stock invoice consumes FIFO receipt layers and reconciles inventory and gr
  await form.locator('[name=units]').fill('3');
  await form.getByRole('button').click();
  await page.getByRole('button',{name:'Confirm & post'}).click();
+ await expect(page.locator('#postedInvoices')).toBeFocused();
+ await expect(page.locator('#postedInvoices tbody tr').first()).toContainText('Fictional Buyer');
+ await expect(page.locator('#invoiceForm [name=description]')).toHaveValue('');
  const result=await page.evaluate(()=>{
   const invoice=db.invoices[0];
   const before=JSON.stringify(db);
