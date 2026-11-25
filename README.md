@@ -1,17 +1,12 @@
-# Universal Accounting Edition 2 — development build v0.5.19
+# Universal Accounting Edition 2 v0.5.19
 
-**This archive contains source code, NOT an APK or EXE.** Android and Windows build recipes are provided in `.github/workflows`.
+Universal Accounting is a local-first, single-user accounting application for Android and Windows. Both packages use the same accounting interface and preserve the original Universal Accounting logo. Devices store records independently. Use an encrypted backup to move records between installations.
 
-- Android: WebView shell and UA launcher icon, JSON backup save/open integration.
-- Windows: Electron shell and UA icon, NSIS installer configuration.
-- HTML: v0.5.14 accounting engine, unchanged.
+- [User manual](USER_MANUAL.md) covers business setup, transactions, reports and backups.
+- [Administrator dashboard](licensing/README.md) covers key setup and paid-order licence issuance.
+- [Android builds](BUILD_ANDROID.md) and [Windows builds](BUILD_WINDOWS.md) describe development packaging.
+- [Release signing](RELEASE_SIGNING.md) lists the production credentials and acceptance checks.
+- [Release test report](TEST_REPORT.md) documents passed checks and release blockers.
+- [Development log](DEVELOPMENT_LOG.md) records version history.
 
-Build instructions: `BUILD_ANDROID.md` and `BUILD_WINDOWS.md`.
-
-Both installations store data locally and independently. No automatic synchronization or data merging. Export a JSON backup from the existing HTML app before restoring it on a new installation. Use fictional transactions for testing.
-
-The Android backup save handler now clears its pending backup even when the file chooser is canceled, and reports success/failure. These changes are statically reviewed, **not tested on an Android device**.
-
-Neither platform installer was built in this environment because dependencies and build tools are unavailable. The software is not production certified.
-
-See [User manual](USER_MANUAL.md) and [Release verification](TEST_REPORT.md).
+Use fictional records to test development builds. Check the release report before distributing a package commercially.

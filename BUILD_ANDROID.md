@@ -1,9 +1,7 @@
-# Android build — v0.5.16
+# Build the Android app
 
-Requires Android Studio or Java 17, Android SDK 35 and Gradle 8.10.2.
+Use Java 17, Android SDK Platform 35 and Gradle 8.9. Run `gradle :app:assembleDebug` from the Android folder. The debug APK appears at `Android/app/build/outputs/apk/debug/app-debug.apk` relative to the repository root.
 
-From the `Android` folder run `gradle assembleDebug`. The output is `Android/app/build/outputs/apk/debug/app-debug.apk`. Install only on devices you control; this is a debug-signed testing build.
+The Build Android APK workflow publishes a debug artifact for development testing. The commercial workflow option requires the public licence key and Android release signing credentials. See [Release signing](RELEASE_SIGNING.md).
 
-Alternatively upload this entire repository to GitHub and run the `Android APK (development)` workflow manually from Actions. Download its artifact, unzip it, then install the APK.
-
-Before installing, export a JSON backup from the HTML app. Android app data is separate. Restore through Administration > Business Settings, then reconcile the trial balance, receivables and payables.
+Before upgrading, export and verify a backup. If Android reports an incompatible signing identity, preserve customer records before uninstalling. After restoring, compare the trial balance and the receivable and payable balances with the original.

@@ -9,7 +9,7 @@ v0.5.19 development build. Test data was fictional.
 | Separate Balance Sheet as-of date, P&L date range and printed earnings | PASS, included in Chromium suite |
 | Backup export, invalid ledger rejection, restore and reload | PASS, included in Chromium suite |
 | Signed offline licence verification | PASS, 3 Node tests including duplicate paid-order rejection and dashboard authorization |
-| Android and Windows package compilation | PASS for first draft commit, Android debug APK and unsigned Windows installer |
+| Android and Windows package compilation | Development build workflows produce an Android debug APK and an unsigned Windows installer. See the draft pull request checks for the current build. |
 | Native installer smoke tests | Pending target-device testing |
 | Existing-customer in-place upgrade | Pending testing on both native packages |
 | Production signing and installer signature verification | Pending signing setup |

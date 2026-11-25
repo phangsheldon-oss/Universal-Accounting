@@ -1,7 +1,7 @@
-# Windows build — v0.5.16
+# Build the Windows installer
 
-Requires Windows 10/11 and Node.js 22 with internet access for npm dependencies.
+Use a Windows x64 machine with Node.js 22. From the Windows folder, run `npm ci`, `node prepare-assets.js` and `npm run dist:win`. The installer appears in `Windows/dist` relative to the repository root.
 
-In PowerShell, change directory to `Windows`, run `npm install`, then `npm run dist:win`. The installer appears in `Windows/dist`. Alternatively use the `Windows installer (development)` GitHub Actions workflow and download its artifact.
+The Build Windows Installer workflow publishes an unsigned installer for development testing. The commercial workflow option requires the public licence key and Windows signing credentials. See [Release signing](RELEASE_SIGNING.md).
 
-This is an unsigned development build. Export your JSON accounting backup before migrating. Windows stores data separately from the browser and Android app.
+Before upgrading, export and verify a backup. After upgrading or moving records, compare the trial balance and the receivable and payable balances with the original.
