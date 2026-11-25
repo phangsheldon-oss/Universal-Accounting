@@ -91,7 +91,7 @@ test('export and restore fictional records and reject an unbalanced backup',asyn
  await setup(page);
  await page.evaluate(()=>{addCustomer('Fictional Buyer');createInvoice(db.customers[0].id,12000,'2026-01-15','Service');return navigate('Settings')});
  const download=page.waitForEvent('download');
- await page.getByRole('button',{name:'Export JSON backup'}).click();
+ await page.getByRole('button',{name:'Export readable JSON'}).click();
  const json=await fs.readFile(await (await download).path());
  const expected=JSON.parse(json);
  const bad=JSON.parse(json);
@@ -105,4 +105,63 @@ test('export and restore fictional records and reject an unbalanced backup',asyn
  await expect(page.locator('#notice')).toContainText('Backup restored');
  await page.reload();
  expect(await page.evaluate(()=>db)).toEqual(expected);
+});
+
+test('commercial wrapper rejects a different device and reopens offline after activation',async({page,context},testInfo)=>{
+ const fs=require('node:fs/promises');
+ const {generateKeyPairSync,sign}=require('node:crypto');
+ const {execFileSync}=require('node:child_process');
+ const {privateKey,publicKey}=generateKeyPairSync('ec',{namedCurve:'prime256v1'});
+ const deviceId='a'.repeat(64);
+ const keyPath=testInfo.outputPath('fictional-public.json');
+ const htmlPath=testInfo.outputPath('commercial.html');
+ await fs.mkdir(testInfo.outputDir,{recursive:true});
+ await fs.writeFile(keyPath,JSON.stringify(publicKey.export({format:'jwk'})));
+ execFileSync(process.execPath,[path.resolve(__dirname,'../licensing/prepare-commercial.cjs'),'windows',keyPath,htmlPath]);
+ function token(id){
+  const payload=Buffer.from(JSON.stringify({product:'Universal Accounting',version:1,licenceId:'fictional-1',installationId:id,platform:'windows',entitlement:'perpetual'}));
+  return payload.toString('base64url')+'.'+sign('sha256',payload,{key:privateKey,dsaEncoding:'ieee-p1363'}).toString('base64url');
+ }
+ await page.addInitScript(id=>{window.UALicenceDevice={getDeviceId:async()=>id}},deviceId);
+ await context.setOffline(true);
+ await page.goto(pathToFileURL(htmlPath).href);
+ await expect(page.locator('#ua-id')).toHaveValue(deviceId);
+ await expect(page.locator('#firstRunSetup')).toHaveCount(0);
+ await page.locator('#ua-token').fill(token('b'.repeat(64)));
+ await page.locator('#ua-activate').click();
+ await expect(page.locator('#ua-status')).toContainText('Invalid licence');
+ await page.locator('#ua-token').fill(token(deviceId));
+ await page.locator('#ua-activate').click();
+ await expect(page.locator('#firstRunSetup')).toBeVisible();
+ await setup(page);
+ await page.reload();
+ await expect(page.locator('#ua-id')).toHaveCount(0);
+ await expect(page.locator('#businessTitle')).toHaveText('Fictional Release Test');
+});
+
+test('encrypted backups require the correct passphrase before replacing records',async({page})=>{
+ const fs=require('node:fs/promises');
+ const passphrase='Fictional backup passphrase';
+ await setup(page);
+ await page.evaluate(()=>navigate('Settings'));
+ const exportDialogs=dialog=>dialog.accept(passphrase);
+ page.on('dialog',exportDialogs);
+ const download=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export encrypted backup'}).click();
+ const json=await fs.readFile(await (await download).path());
+ page.off('dialog',exportDialogs);
+ expect(json.toString()).not.toContain('Fictional Release Test');
+ const file={name:'encrypted-backup.json',mimeType:'application/json',buffer:json};
+ await page.evaluate(()=>{db.business='Temporary Fictional Business';save()});
+ page.once('dialog',dialog=>dialog.accept('Incorrect passphrase'));
+ await page.locator('#import').setInputFiles(file);
+ await expect(page.locator('#notice')).toContainText('Incorrect passphrase');
+ expect(await page.evaluate(()=>db.business)).toBe('Temporary Fictional Business');
+ const restoreDialogs=dialog=>dialog.type()==='prompt'?dialog.accept(passphrase):dialog.accept();
+ page.on('dialog',restoreDialogs);
+ await page.locator('#import').setInputFiles(file);
+ await expect(page.locator('#notice')).toContainText('Backup restored');
+ page.off('dialog',restoreDialogs);
+ await page.reload();
+ expect(await page.evaluate(()=>db.business)).toBe('Fictional Release Test');
 });

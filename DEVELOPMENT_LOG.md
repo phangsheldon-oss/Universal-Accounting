@@ -19,3 +19,5 @@
 - Added OS-derived device identifiers and optional build-time offline activation. Native and signing checks remain pending.
 - Updated setup defaults, added accounting do’s and don’ts, and wrote the development user manual.
 - Ran nine fictional Chromium tests and one Node licence test. See TEST_REPORT.md for open release checks.
+- Added passphrase-encrypted backup export and restore, an owner-only paid-order dashboard, duplicate order prevention, and signing workflows for production credentials.
+- Initial CI passed accounting tests and produced development installers for both platforms. Subsequent local verification passed 11 Chromium tests and two licence tests.

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       commercial:
-        description: Embed the owner's public licence verification key
+        description: Build and verify a signed APK with licence activation
         required: false
         type: boolean
         default: false
@@ -69,12 +69,50 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
+        if: ${{ !inputs.commercial }}
         working-directory: Android
         run: gradle :app:assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Upload debug APK
+        if: ${{ !inputs.commercial }}
         uses: actions/upload-artifact@v4
         with:
           name: Universal-Accounting-Android-Debug
           path: Android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Build unsigned release APK
+        if: inputs.commercial
+        working-directory: Android
+        run: gradle :app:assembleRelease --stacktrace
+
+      - name: Sign and verify release APK
+        if: inputs.commercial
+        env:
+          UA_ANDROID_KEYSTORE_BASE64: ${{ secrets.UA_ANDROID_KEYSTORE_BASE64 }}
+          UA_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.UA_ANDROID_KEYSTORE_PASSWORD }}
+          UA_ANDROID_KEY_ALIAS: ${{ secrets.UA_ANDROID_KEY_ALIAS }}
+          UA_ANDROID_KEY_PASSWORD: ${{ secrets.UA_ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${UA_ANDROID_KEYSTORE_BASE64:?Missing key store}" "${UA_ANDROID_KEYSTORE_PASSWORD:?Missing key store password}" "${UA_ANDROID_KEY_ALIAS:?Missing key alias}" "${UA_ANDROID_KEY_PASSWORD:?Missing key password}"
+          umask 077
+          KEYSTORE="$RUNNER_TEMP/ua-release-keystore"
+          trap 'rm -f "$KEYSTORE"' EXIT
+          printf '%s' "$UA_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          mkdir -p release
+          "$APKSIGNER" sign --ks "$KEYSTORE" --ks-key-alias "$UA_ANDROID_KEY_ALIAS" \
+            --ks-pass env:UA_ANDROID_KEYSTORE_PASSWORD --key-pass env:UA_ANDROID_KEY_PASSWORD \
+            --out release/Universal-Accounting-Android.apk Android/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$APKSIGNER" verify --print-certs release/Universal-Accounting-Android.apk
+          (cd release && sha256sum Universal-Accounting-Android.apk > SHA256SUMS.txt)
+
+      - name: Upload signed Android APK
+        if: inputs.commercial
+        uses: actions/upload-artifact@v4
+        with:
+          name: Universal-Accounting-Android-Signed
+          path: release/
           if-no-files-found: error

@@ -8,6 +8,7 @@ on:
     paths:
       - 'Android/app/src/main/assets/index.html'
       - 'tests/**'
+      - 'licensing/**'
       - '.github/workflows/test-accounting.yml'
 jobs:
   accounting-tests:

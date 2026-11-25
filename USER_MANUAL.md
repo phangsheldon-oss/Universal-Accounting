@@ -24,7 +24,7 @@ The development build does not post inventory sales depletion, cost of goods sol
 
 ## Back up and restore
 
-From Administration → Settings, export a JSON backup. On Android, choose a destination in the system file picker. Keep a dated copy in a private location separate from the device. JSON exports contain readable business data. Use encrypted storage for backup copies.
+From Administration → Settings, choose Export encrypted backup and create a passphrase. Store the passphrase separately because it is required to restore. Export readable JSON produces an unencrypted copy for compatibility. On Android, choose a destination in the system file picker. Keep a dated copy in a private location separate from the device. Use encrypted storage for any readable backup copies.
 
 Before restoring, export the current records. Select Restore JSON backup, choose the file and confirm replacement. Verify the business name and compare the trial balance, customer balances and vendor balances with your pre-restore records. The backup carries business records separately from your licence and function passwords.
 
