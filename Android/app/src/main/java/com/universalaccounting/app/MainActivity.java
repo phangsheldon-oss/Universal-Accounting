@@ -70,16 +70,19 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new BackupBridge(), "AndroidBackup");
         webView.addJavascriptInterface(new LicenceBridge(), "AndroidLicence");
         webView.loadUrl(APP_URL);
+        android.widget.FrameLayout content = new android.widget.FrameLayout(this);
+        content.setBackgroundColor(0xff17324d);
+        content.addView(webView, new android.widget.FrameLayout.LayoutParams(-1, -1));
         if (android.os.Build.VERSION.SDK_INT >= 35) {
-            webView.setOnApplyWindowInsetsListener((view, insets) -> {
+            content.setOnApplyWindowInsetsListener((view, insets) -> {
                 android.graphics.Insets safeArea = insets.getInsets(
                     android.view.WindowInsets.Type.systemBars()
                         | android.view.WindowInsets.Type.displayCutout());
                 view.setPadding(safeArea.left, safeArea.top, safeArea.right, safeArea.bottom);
-                return insets;
+                return android.view.WindowInsets.CONSUMED;
             });
         }
-        setContentView(webView);
+        setContentView(content);
     }
 
     public final class LicenceBridge {
